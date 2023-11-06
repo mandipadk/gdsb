@@ -24,6 +24,12 @@ const TEST_COMMAND = {
   type: 1,
 };
 
+const SUBMIT_COMMAND = {
+  name: 'submit',
+  description: 'Basic command to submit answers',
+  type: 1,
+};
+
 // Command containing options
 const CHALLENGE_COMMAND = {
   name: 'challenge',
@@ -40,6 +46,6 @@ const CHALLENGE_COMMAND = {
   type: 1,
 };
 
-const ALL_COMMANDS = [TEST_COMMAND, CHALLENGE_COMMAND];
+const ALL_COMMANDS = [TEST_COMMAND, CHALLENGE_COMMAND, SUBMIT_COMMAND];
 
 InstallGlobalCommands(process.env.APP_ID, ALL_COMMANDS);
