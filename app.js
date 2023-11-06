@@ -8,7 +8,6 @@ import {
   ButtonStyleTypes,
 } from 'discord-interactions';
 import { VerifyDiscordRequest, getRandomEmoji, DiscordRequest } from './utils.js';
-import { getShuffledOptions, getResult } from './game.js';
 
 // Create an express app
 const app = express();
@@ -22,7 +21,7 @@ const activeGames = {};
 
 
 app.get('/', function (req,res){
-  res.send("The bot is alive. App ID= "+ process.env.APP_ID)
+  res.send("The bot is alive. App ID = "+ process.env.APP_ID)
 })
 
 /**
@@ -32,9 +31,7 @@ app.post('/interactions', async function (req, res) {
   // Interaction type and data
   const { type, id, data } = req.body;
 
-  /**
-   * Handle verification requests
-   */
+  //Handle verification requests
   if (type === InteractionType.PING) {
     return res.send({ type: InteractionResponseType.PONG });
   }
@@ -71,7 +68,7 @@ app.post('/interactions', async function (req, res) {
                 {
                   type: MessageComponentTypes.BUTTON,
                   // Value for your app to identify the button
-                  custom_id: 'my_button',
+                  custom_id: 'answer_button',
                   label: 'Submit A Code',
                   style: ButtonStyleTypes.SUCCESS,
                 },
@@ -90,59 +87,100 @@ app.post('/interactions', async function (req, res) {
     }
   }
 
-  /**
-   * Handle requests from interactive components
-   */
+  // Handle requests from interactive components
   if (type === InteractionType.MESSAGE_COMPONENT) {
     // custom_id set in payload when sending message component
     const componentId = data.custom_id;
     // user who clicked button
     const userId = req.body.member.user.id;
 
-    if (componentId === 'my_button') {
+    if (componentId === 'answer_button') {
       console.log("-------------------------------")
       console.log("Popup Modal")
       console.log("-------------------------------")
       console.log(req.body);
       console.log("-------------------------------")
       return res.send({
-        type: InteractionResponseType.MODAL,
+        type: InteractionResponseType.APPLICATION_MODAL,
         data: {
-          content: `<@${userId}> sent the answer!` },
-          components: [{
-            type: 4,
-            custom_id: "answerInput",
-            label: "Enter your multiline answer here",
-            style: 2,
-            min_length: 1,
-            max_length: 4000,
-            placeholder: "something here",
-            required: true
-          }]
-       });
-    };
-
-    if (componentId === 'answerInput') {
-      console.log(req.body);
-      return res.send({
-        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-        data: {
-           content: `<@${userId}> sent the answer!` },
-           components: [
+          custom_id: 'answer_modal',
+          title: 'Submit your code below',
+          },
+          components: [
             {
-              id: "1113294336206065845",
-              guild_id: "901394188023787540",
-              name: "general",
-              type: 2,
-              position: 6,
-              permission_overwrites: [],
-              rate_limit_per_user: 2,
-              topic: req.body,
-              default_auto_archive_duration: 60           
-            }]
-      });
+              // Text inputs must be inside of an action component
+              type: MessageComponentTypes.ACTION_ROW,
+              components: [
+                {
+                  // See https://discord.com/developers/docs/interactions/message-components#text-inputs-text-input-structure
+                  type: MessageComponentTypes.INPUT_TEXT,
+                  custom_id: 'my_text',
+                  style: 1,
+                  label: 'Type your name',
+                },
+                {
+                  type: MessageComponentTypes.ACTION_ROW,
+                  components: [
+                    {
+                      type: MessageComponentTypes.INPUT_TEXT,
+                      custom_id: 'my_longer_text',
+                      // Bigger text box for input
+                      style: 2,
+                      label: 'Type your answer here',
+                    },
+                  ],
+                }
+              ]
+            }
+          ]
+        });
     };
   }
+
+  if (type === InteractionType.APPLICATION_MODAL_SUBMIT) {
+      // custom_id of modal
+      const modalId = data.custom_id;
+      // user ID of member who filled out modal
+      const userId = req.body.member.user.id;
+  
+      if (modalId === 'answer_modal') {
+        let modalValues = '';
+        // Get value of text inputs
+        for (let action of data.components) {
+          let inputComponent = action.components[0];
+          modalValues += `${inputComponent.custom_id}: ${inputComponent.value}\n`;
+        }
+  
+        return res.send({
+          type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+          data: {
+            content: `<@${userId}> typed the following (in a modal):\n\n${modalValues}`,
+          },
+        });
+      }
+    }
+
+    // if (componentId === 'answerInput') {
+    //   console.log(req.body);
+    //   return res.send({
+    //     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+    //     data: {
+    //        content: `<@${userId}> sent the answer!` },
+    //        components: [
+    //         {
+    //           id: "1113294336206065845",
+    //           guild_id: "901394188023787540",
+    //           name: "general",
+    //           type: 2,
+    //           position: 6,
+    //           permission_overwrites: [],
+    //           rate_limit_per_user: 2,
+    //           topic: req.body,
+    //           default_auto_archive_duration: 60           
+    //         }]
+    //   });
+    // };
+
 
 });
 

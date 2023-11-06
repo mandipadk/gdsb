@@ -21,13 +21,13 @@ function createCommandChoices() {
 const TEST_COMMAND = {
   name: 'test',
   description: 'Basic command',
-  type: 1,
+  // type: 1,
 };
 
 const SUBMIT_COMMAND = {
   name: 'submit',
   description: 'Basic command to submit answers',
-  type: 1,
+  // type: 3,
 };
 
 // Command containing options
