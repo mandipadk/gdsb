@@ -86,25 +86,10 @@ app.post('/interactions', async function (req, res) {
 
   // Handle requests from interactive components
   if (type === InteractionType.MESSAGE_COMPONENT) {
-    console.log('-----------------------------------')
-    console.log('Data from Interaction with button')
-    console.log('-----------------------------------')
-    console.log(data)
-    console.log('-----------------------------------')
-    console.log('Data ends here')
-    console.log('-----------------------------------')
-
-    // custom_id set in payload when sending message component
     const componentId = data.custom_id;
-    // user who clicked button
     const userId = req.body.member.user.id;
 
     if (componentId === 'answer_button') {
-      // console.log("-------------------------------")
-      // console.log("Popup Modal")
-      // console.log("-------------------------------")
-      // console.log(req.body);
-      // console.log("-------------------------------")
       return res.send({
         type: InteractionResponseType.MODAL,
         data: {
@@ -113,7 +98,6 @@ app.post('/interactions', async function (req, res) {
           },
           components: [
             {
-              // Text inputs must be inside of an action component
               type: MessageComponentTypes.ACTION_ROW,
               components: [
                 {
@@ -130,7 +114,6 @@ app.post('/interactions', async function (req, res) {
                 {
                   type: MessageComponentTypes.INPUT_TEXT,
                   custom_id: 'answer_text',
-                  // Bigger text box for answer input
                   style: 2,
                   label: 'Type some (longer) text',
                 },
@@ -141,7 +124,6 @@ app.post('/interactions', async function (req, res) {
     };
 
     if (componentId === 'second_button') {
-      // console.log(req.body);
       return res.send({
         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
         data: { content: `<@${userId}> clicked the button` },
@@ -150,14 +132,11 @@ app.post('/interactions', async function (req, res) {
   }
 
   if (type === InteractionType.MODAL_SUBMIT) {
-      // custom_id of modal
       const modalId = data.custom_id;
-      // user ID of member who filled out modal
       const userId = req.body.member.user.id;
   
       if (modalId === 'answer_modal') {
         let modalValues = '';
-        // Get value of text inputs
         for (let action of data.components) {
           let inputComponent = action.components[0];
           modalValues += `${inputComponent.custom_id}: ${inputComponent.value}\n`;
