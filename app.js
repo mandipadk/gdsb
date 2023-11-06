@@ -41,7 +41,6 @@ app.post('/interactions', async function (req, res) {
 
     // "test" command
     if (name === 'test') {
-      // Send a message into the channel where command was triggered from
       return res.send({
         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
         data: {
@@ -55,7 +54,7 @@ app.post('/interactions', async function (req, res) {
   if (type === InteractionType.APPLICATION_COMMAND) {
     // Slash command with name of "submit"
     if (data.name === 'submit') {
-      // Send a message with a button
+      // Send a message with buttons
       return res.send({
         type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
         data: {
@@ -67,14 +66,12 @@ app.post('/interactions', async function (req, res) {
               components: [
                 {
                   type: MessageComponentTypes.BUTTON,
-                  // Value for your app to identify the button
                   custom_id: 'answer_button',
                   label: 'Submit A Code',
                   style: ButtonStyleTypes.SUCCESS,
                 },
                 {
                   type: MessageComponentTypes.BUTTON,
-                  // Value for your app to identify the button
                   custom_id: 'second_button',
                   label: 'Ask a question',
                   style: ButtonStyleTypes.DANGER,
@@ -89,19 +86,27 @@ app.post('/interactions', async function (req, res) {
 
   // Handle requests from interactive components
   if (type === InteractionType.MESSAGE_COMPONENT) {
+    console.log('-----------------------------------')
+    console.log('Data from Interaction with button')
+    console.log('-----------------------------------')
+    console.log(data)
+    console.log('-----------------------------------')
+    console.log('Data ends here')
+    console.log('-----------------------------------')
+
     // custom_id set in payload when sending message component
     const componentId = data.custom_id;
     // user who clicked button
     const userId = req.body.member.user.id;
 
     if (componentId === 'answer_button') {
-      console.log("-------------------------------")
-      console.log("Popup Modal")
-      console.log("-------------------------------")
-      console.log(req.body);
-      console.log("-------------------------------")
+      // console.log("-------------------------------")
+      // console.log("Popup Modal")
+      // console.log("-------------------------------")
+      // console.log(req.body);
+      // console.log("-------------------------------")
       return res.send({
-        type: InteractionResponseType.APPLICATION_MODAL,
+        type: InteractionResponseType.MODAL,
         data: {
           custom_id: 'answer_modal',
           title: 'Submit your code below',
@@ -112,32 +117,39 @@ app.post('/interactions', async function (req, res) {
               type: MessageComponentTypes.ACTION_ROW,
               components: [
                 {
-                  // See https://discord.com/developers/docs/interactions/message-components#text-inputs-text-input-structure
                   type: MessageComponentTypes.INPUT_TEXT,
-                  custom_id: 'my_text',
+                  custom_id: 'name_text',
                   style: 1,
-                  label: 'Type your name',
+                  label: 'Type some text',
                 },
+              ],
+            },
+            {
+              type: MessageComponentTypes.ACTION_ROW,
+              components: [
                 {
-                  type: MessageComponentTypes.ACTION_ROW,
-                  components: [
-                    {
-                      type: MessageComponentTypes.INPUT_TEXT,
-                      custom_id: 'my_longer_text',
-                      // Bigger text box for input
-                      style: 2,
-                      label: 'Type your answer here',
-                    },
-                  ],
-                }
-              ]
-            }
-          ]
+                  type: MessageComponentTypes.INPUT_TEXT,
+                  custom_id: 'answer_text',
+                  // Bigger text box for answer input
+                  style: 2,
+                  label: 'Type some (longer) text',
+                },
+              ],
+            },
+          ],
         });
     };
+
+    if (componentId === 'second_button') {
+      // console.log(req.body);
+      return res.send({
+        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+        data: { content: `<@${userId}> clicked the button` },
+      });
+    }
   }
 
-  if (type === InteractionType.APPLICATION_MODAL_SUBMIT) {
+  if (type === InteractionType.MODAL_SUBMIT) {
       // custom_id of modal
       const modalId = data.custom_id;
       // user ID of member who filled out modal
@@ -159,29 +171,6 @@ app.post('/interactions', async function (req, res) {
         });
       }
     }
-
-    // if (componentId === 'answerInput') {
-    //   console.log(req.body);
-    //   return res.send({
-    //     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-    //     data: {
-    //        content: `<@${userId}> sent the answer!` },
-    //        components: [
-    //         {
-    //           id: "1113294336206065845",
-    //           guild_id: "901394188023787540",
-    //           name: "general",
-    //           type: 2,
-    //           position: 6,
-    //           permission_overwrites: [],
-    //           rate_limit_per_user: 2,
-    //           topic: req.body,
-    //           default_auto_archive_duration: 60           
-    //         }]
-    //   });
-    // };
-
-
 });
 
 

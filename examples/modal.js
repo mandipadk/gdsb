@@ -85,6 +85,30 @@ app.post('/interactions', function (req, res) {
   }
 });
 
+
+    // if (componentId === 'answerInput') {
+    //   console.log(req.body);
+    //   return res.send({
+    //     type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+    //     data: {
+    //        content: `<@${userId}> sent the answer!` },
+    //        components: [
+    //         {
+    //           id: "1113294336206065845",
+    //           guild_id: "901394188023787540",
+    //           name: "general",
+    //           type: 2,
+    //           position: 6,
+    //           permission_overwrites: [],
+    //           rate_limit_per_user: 2,
+    //           topic: req.body,
+    //           default_auto_archive_duration: 60           
+    //         }]
+    //   });
+    // };
+
+
+
 app.listen(3000, () => {
   console.log('Listening on port 3000');
 });
