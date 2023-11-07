@@ -86,10 +86,14 @@ app.post('/interactions', async function (req, res) {
 
   // Handle requests from interactive components
   if (type === InteractionType.MESSAGE_COMPONENT) {
+    console.log("-----------Data Start--------------")
+    console.log(data)
+    console.log("-----------Data End--------------")
     const componentId = data.custom_id;
     const userId = req.body.member.user.id;
 
     if (componentId === 'answer_button') {
+      try{
       return res.send({
         type: InteractionResponseType.MODAL,
         data: {
@@ -121,6 +125,17 @@ app.post('/interactions', async function (req, res) {
             },
           ],
         });
+      }
+      catch (error){
+        // Handle the error
+        console.log(error);
+        return res.send({
+          type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+          data: {
+            content: 'Something went wrong while sending the modal: ' + error.message,
+          },
+        });
+      }
     };
 
     if (componentId === 'second_button') {
