@@ -9,16 +9,18 @@ import {
 } from 'discord-interactions';
 import { VerifyDiscordRequest, getRandomEmoji, DiscordRequest } from './utils.js';
 
+import { Client, Events, GatewayIntentBits } from 'discord.js';
+import { TextChannel } from 'discord.js';
+
+const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+
+
 // Create an express app
 const app = express();
 // Get port, or default to 3000
 const PORT = process.env.PORT || 3000;
 // Parse request body and verifies incoming requests using discord-interactions package
 app.use(express.json({ verify: VerifyDiscordRequest(process.env.PUBLIC_KEY) }));
-
-// Store for in-progress games. In production, you'd want to use a DB
-const activeGames = {};
-
 
 app.get('/', function (req,res){
   res.send("The bot is alive. App ID = "+ process.env.APP_ID)
@@ -96,9 +98,6 @@ app.post('/interactions', async function (req, res) {
 
     if (componentId == 'answer_button') {
       // await interaction.defer();
-      console.log("----------------Request Start--------------------")
-      console.log(req)
-      console.log("----------------Request End--------------------")
       try{
       return res.send({
         type: InteractionResponseType.MODAL,
@@ -146,8 +145,34 @@ app.post('/interactions', async function (req, res) {
 
     if (componentId === 'second_button') {
       return res.send({
-        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-        data: { content: `<@${userId}> clicked the button` },
+        type: InteractionResponseType.MODAL,
+        data: { 
+          custom_id : "askQuestion",
+          title: "Ask a Question",
+          components: [
+            {
+              type: MessageComponentTypes.ACTION_ROW,
+              components: [
+                {
+                  type: MessageComponentTypes.ACTION_ROW,
+                  components: [
+                    {
+                      type: MessageComponentTypes.INPUT_TEXT,
+                      custom_id: "nameInput",
+                      label: "Your Name"
+                    }
+                  ]
+                },
+                {
+                  type: MessageComponentTypes.INPUT_TEXT,
+                  custom_id : "questionInput",
+                  label: "Question"
+                }
+              ]
+            },
+          ]
+
+        },
       });
     }
   }
@@ -158,23 +183,94 @@ app.post('/interactions', async function (req, res) {
   
       if (modalId === 'answer_modal') {
         let modalValues = '';
+        let userName = '';
+        let userCode = '';
+
         for (let action of data.components) {
           let inputComponent = action.components[0];
-          modalValues += `${inputComponent.custom_id}: ${inputComponent.value}\n`;
+          if (inputComponent.custom_id === 'name_text') {
+            userName = inputComponent.value;
+            modalValues += `**Name:** ${userName}\n`;
+          } else if (inputComponent.custom_id === 'answer_text') {
+            userCode = inputComponent.value;
+            modalValues += `**Submitted Code:**\n\`\`\`${userCode}\`\`\`\n`;
+          }
         }
-  
-        return res.send({
+
+        // Get the channel you want to create the thread in
+        const targetChannel = client.channels.cache.get(process.env.SUBMISSION_CHANNEL);
+        if (!(targetChannel instanceof TextChannel)) {
+          console.error('Channel is not a text channel');
+          return;
+        }
+
+        // Create a new thread in the target channel
+        const thread = await targetChannel.threads.create({
+          name: `Submission from ${userName}`,
+          autoArchiveDuration: 60,
+          reason: 'New submission',
+        });
+        
+        // Send the message to the new thread
+        await thread.send(modalValues);
+         
+        return res.send(
+          {
           type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
           data: {
-            content: `<@${userId}> typed the following (in a modal):\n\n${modalValues}`,
-          },
+            content: `<@${userId}> You have sucessfully submitted the form!`,
+            flags : InteractionResponseFlags.EPHEMERAL
+          }
+        },
+        );
+      }
+
+      if (modalId === 'askQuestion'){
+        let modalValues = '';
+        let userName = '';
+        let userCode = '';
+
+        for (let action of data.components) {
+          let inputComponent = action.components[0];
+          if (inputComponent.custom_id === 'nameInput') {
+            userName = inputComponent.value;
+            modalValues += `**Name:** ${userName}\n`;
+          } else if (inputComponent.custom_id === 'questionInput') {
+            userCode = inputComponent.value;
+            modalValues += `**Submitted Question:**\n\`\`\`${userCode}\`\`\`\n`;
+          }
+        }
+
+        // Get the channel you want to create the thread in
+        const targetChannel = client.channels.cache.get(process.env.SUBMISSION_CHANNEL);
+        if (!(targetChannel instanceof TextChannel)) {
+          console.error('Channel is not a text channel');
+          return;
+        }
+
+        // Create a new thread in the target channel
+        const thread = await targetChannel.threads.create({
+          name: `Question from ${userName}`,
+          autoArchiveDuration: 60,
+          reason: 'New question',
         });
+        
+        // Send the message to the new thread
+        await thread.send(modalValues);
+        return res.send(
+          {
+            type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+            data: {
+              content : `<@${userId}> Your question is sent to the admins! Wait for a followup.`,
+              flags: InteractionResponseFlags.EPHEMERAL
+            }
+          }
+        )
       }
     }
 });
 
-
-
+client.login(process.env.DISCORD_TOKEN);
 app.listen(PORT, () => {
   console.log('Listening on port', PORT);
 });
