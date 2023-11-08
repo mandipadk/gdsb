@@ -85,21 +85,26 @@ app.post('/interactions', async function (req, res) {
   }
 
   // Handle requests from interactive components
-  if (type === InteractionType.MESSAGE_COMPONENT) {
+  // async(interaction) => {
+    if (type === InteractionType.MESSAGE_COMPONENT) {
     console.log("-----------Data Start--------------")
     console.log(data)
     console.log("-----------Data End--------------")
     const componentId = data.custom_id;
     const userId = req.body.member.user.id;
+    // await interaction.defer()
 
-    if (componentId === 'answer_button') {
+    if (componentId == 'answer_button') {
+      // await interaction.defer();
+      console.log("----------------Request Start--------------------")
+      console.log(req)
+      console.log("----------------Request End--------------------")
       try{
       return res.send({
         type: InteractionResponseType.MODAL,
         data: {
           custom_id: 'answer_modal',
-          title: 'Submit your code below',
-          },
+          title: 'Submit your code below',  
           components: [
             {
               type: MessageComponentTypes.ACTION_ROW,
@@ -108,7 +113,7 @@ app.post('/interactions', async function (req, res) {
                   type: MessageComponentTypes.INPUT_TEXT,
                   custom_id: 'name_text',
                   style: 1,
-                  label: 'Type some text',
+                  label: 'Type your name here',
                 },
               ],
             },
@@ -119,11 +124,12 @@ app.post('/interactions', async function (req, res) {
                   type: MessageComponentTypes.INPUT_TEXT,
                   custom_id: 'answer_text',
                   style: 2,
-                  label: 'Type some (longer) text',
+                  label: 'Type your answer here',
                 },
               ],
             },
           ],
+        }
         });
       }
       catch (error){
@@ -166,6 +172,7 @@ app.post('/interactions', async function (req, res) {
       }
     }
 });
+
 
 
 app.listen(PORT, () => {
